@@ -33,7 +33,7 @@ struct ContentView: View {
     ]
     
     //Animation
-    @State private var borderAnimation = false
+    @State private var textRotation = 0.0
     
     var body: some View {
         ZStack {
@@ -46,13 +46,16 @@ struct ContentView: View {
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
+                    .animation(.easeInOut)
                 
                 Spacer()
                 
                 Text("\(randomSelectedFirstNumber) x \(randomSelectedSecondNumber) = ?")
+                    .animation(.spring)
                     .font(.largeTitle)
                     .fontWeight(.heavy)
-                    .foregroundStyle(.white)
+                    .backRectStyle(300, 120)
+                    .rotation3DEffect(.degrees(textRotation), axis: (x: 1, y: 0, z: 0))
                 
                 Spacer()
                 Spacer()
@@ -61,16 +64,17 @@ struct ContentView: View {
                     ForEach(answerOptions, id: \.self) { option in
                         Button("\(option)") {
                             buttonTapped(option)
+                            withAnimation(.spring(duration: 0.8, bounce: 0.5)) {
+                                textRotation += 360
+                            }
                         }
-                        .mainButtonStyle(borderAnimation: borderAnimation)
-                        .onAppear {
-                            borderAnimation = true
-                        }
+                        .backRectStyle(120, 120)
                     }
                 }
                 Spacer()
             }
         }
+        .background(.white)
     }
     
     //Function to count the score
@@ -90,6 +94,7 @@ struct ContentView: View {
     func askNewQuestion() {
         randomSelectedFirstNumber = Int.random(in: 2...20)
         randomSelectedSecondNumber = Int.random(in: 1...12)
+        textRotation = 0
         answerOptions = buttonAnswerAndRandomAnswers(randomSelectedFirstNumber, randomSelectedSecondNumber)
     }
     
@@ -105,34 +110,50 @@ struct ContentView: View {
 }
 
 //View Design For Main Buttons
-struct MainButtonStyle: ViewModifier {
-    var borderAnimation: Bool
+struct BackgroundReactangleWithAnimatedGradientBorder: ViewModifier {
+    let width: CGFloat
+    let height: CGFloat
+    
+    @State private var rotation = Angle.degrees(0)
     
     func body(content: Content) -> some View {
         content
             .font(.largeTitle.bold())
             .padding(20)
-            .frame(maxWidth: 120, minHeight: 120)
-            .foregroundStyle(LinearGradient(colors: [.yellow, .pink, .orange, .mint], startPoint: .topLeading, endPoint: .bottomTrailing))
+            .frame(maxWidth: width, minHeight: height)
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [.yellow, .pink, .orange, .mint],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .background(.white)
             .overlay(
                 RoundedRectangle(cornerRadius: 15)
                     .stroke(
-                        LinearGradient(
-                            colors: [.yellow, .pink, .cyan, .mint, .orange, .purple, .pink, .blue, .yellow],
-                            startPoint: borderAnimation ? .topLeading : .topTrailing,
-                            endPoint: borderAnimation ? .bottomTrailing: .bottomLeading),
-                            lineWidth: 15
+                        AngularGradient(
+                            gradient: Gradient(colors: [.yellow, .pink, .cyan, .mint, .orange, .purple, .pink, .blue, .yellow]),
+                            center: .center,
+                            angle: rotation
+                        ),
+                        lineWidth: 12
                     )
-                    .animation(.linear(duration: 5).repeatForever(autoreverses: true), value: borderAnimation)
             )
             .clipShape(.rect(cornerRadius: 10))
+            .onAppear {
+                withAnimation(.linear(duration: 5).repeatForever(autoreverses: false)) {
+                    rotation = .degrees(360)
+                }
+            }
+            .shadow(radius: 10, x: -10, y: 10)
     }
 }
 
+
 extension View {
-    func mainButtonStyle(borderAnimation: Bool) -> some View {
-        modifier(MainButtonStyle(borderAnimation: borderAnimation))
+    func backRectStyle(_ width: CGFloat, _ height: CGFloat) -> some View {
+        modifier(BackgroundReactangleWithAnimatedGradientBorder(width: width, height: height))
     }
 }
 
