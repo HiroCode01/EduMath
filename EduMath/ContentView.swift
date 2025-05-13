@@ -35,6 +35,11 @@ struct ContentView: View {
     //Animation
     @State private var textRotation = 0.0
     
+    //Alert
+    @State private var alertTitle: String = ""
+    @State private var alertMessage: String = ""
+    @State private var showAlert: Bool = false
+    
     var body: some View {
         ZStack {
             //Background View
@@ -75,6 +80,13 @@ struct ContentView: View {
             }
         }
         .background(.white)
+        .alert(alertTitle, isPresented: $showAlert) {
+            Button("New Game") {
+                restartGame()
+            }
+        } message: {
+            Text("\(alertMessage)")
+        }
     }
     
     //Function to count the score
@@ -84,7 +96,10 @@ struct ContentView: View {
         }
         
         guard scorePoints < 10 else {
-            return restartGame()
+            alertTitle = "You Win!"
+            alertMessage = "Your score is: \(scorePoints)"
+            showAlert = true
+            return
         }
         
         askNewQuestion()
@@ -114,7 +129,7 @@ struct BackgroundReactangleWithAnimatedGradientBorder: ViewModifier {
     let width: CGFloat
     let height: CGFloat
     
-    @State private var rotation = Angle.degrees(0)
+    @State private var gradientRotation = Angle.degrees(0)
     
     func body(content: Content) -> some View {
         content
@@ -135,18 +150,18 @@ struct BackgroundReactangleWithAnimatedGradientBorder: ViewModifier {
                         AngularGradient(
                             gradient: Gradient(colors: [.yellow, .pink, .cyan, .mint, .orange, .purple, .pink, .blue, .yellow]),
                             center: .center,
-                            angle: rotation
+                            angle: gradientRotation
                         ),
                         lineWidth: 12
                     )
             )
             .clipShape(.rect(cornerRadius: 10))
+            .shadow(radius: 10, x: -10, y: 10)
             .onAppear {
                 withAnimation(.linear(duration: 5).repeatForever(autoreverses: false)) {
-                    rotation = .degrees(360)
+                    gradientRotation = .degrees(360)
                 }
             }
-            .shadow(radius: 10, x: -10, y: 10)
     }
 }
 
